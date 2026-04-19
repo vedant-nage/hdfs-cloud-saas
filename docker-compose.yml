@@ -42,7 +42,7 @@ services:
       HADOOP_HOME: /opt/hadoop
       HDFS_DATANODE_USER: hadoop
     ports:
-      - "9864:9864"   # DataNode Web UI
+      - "9870:9870"   # DataNode Web UI
     volumes:
       - datanode_data:/opt/hadoop/data/dataNode
       - ./hadoop-config:/opt/hadoop/etc/hadoop
@@ -52,7 +52,7 @@ services:
       namenode:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9864"]
+      test: ["CMD", "curl", "-f", "http://localhost:9870"]
       interval: 30s
       timeout: 10s
       retries: 5
