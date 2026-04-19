@@ -1,0 +1,99 @@
+version: '3.8'
+
+# ─────────────────────────────────────────────────────────────────
+# NimbusFS — Full Stack Docker Compose
+# Runs: Hadoop NameNode + DataNode + NimbusFS Node.js API + UI
+# ─────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Hadoop NameNode ──────────────────────────────────
+  namenode:
+    image: apache/hadoop:3.3.6
+    hostname: namenode
+    container_name: namenode
+    command: ["hdfs", "namenode"]
+    environment:
+      HADOOP_HOME: /opt/hadoop
+      CLUSTER_NAME: nimbusfs-cluster
+      HDFS_NAMENODE_USER: hadoop
+    ports:
+      - "9870:9870"   # NameNode Web UI
+      - "9000:9000"   # HDFS IPC
+    volumes:
+      - namenode_data:/opt/hadoop/data/nameNode
+      - ./hadoop-config:/opt/hadoop/etc/hadoop
+    networks:
+      - hdfs-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9870"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ── Hadoop DataNode ──────────────────────────────────
+  datanode:
+    image: apache/hadoop:3.3.6
+    hostname: datanode
+    container_name: datanode
+    command: ["hdfs", "datanode"]
+    environment:
+      HADOOP_HOME: /opt/hadoop
+      HDFS_DATANODE_USER: hadoop
+    ports:
+      - "9864:9864"   # DataNode Web UI
+    volumes:
+      - datanode_data:/opt/hadoop/data/dataNode
+      - ./hadoop-config:/opt/hadoop/etc/hadoop
+    networks:
+      - hdfs-net
+    depends_on:
+      namenode:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9864"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ── NimbusFS App ─────────────────────────────────────
+  nimbusfs:
+    build: .
+    container_name: nimbusfs
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HDFS_HOST: namenode
+      HDFS_PORT: 9870
+      HDFS_USER: hadoop
+      HDFS_BASE_PATH: /cloud-storage
+      AES_SECRET_KEY: ${AES_SECRET_KEY:-change-this-secret-in-production-abc123}
+      MAX_FILE_SIZE_MB: 500
+      CHUNK_SIZE_MB: 4
+    volumes:
+      - /tmp/hdfs-cloud-uploads:/tmp/hdfs-cloud-uploads
+    networks:
+      - hdfs-net
+    depends_on:
+      namenode:
+        condition: service_healthy
+      datanode:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  namenode_data:
+  datanode_data:
+
+networks:
+  hdfs-net:
+    driver: bridge

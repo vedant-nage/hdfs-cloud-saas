@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NimbusFS — Cloud Storage</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/app.css" />
+</head>
+<body>
+  <!-- Background grid -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="noise" aria-hidden="true"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 2L25 8V20L14 26L3 20V8L14 2Z" stroke="var(--accent)" stroke-width="1.5" fill="none"/>
+          <path d="M14 8L20 11.5V18.5L14 22L8 18.5V11.5L14 8Z" fill="var(--accent)" opacity="0.3"/>
+          <circle cx="14" cy="14" r="3" fill="var(--accent)"/>
+        </svg>
+        <span class="logo-text">NimbusFS</span>
+        <span class="logo-badge">HDFS</span>
+      </div>
+      <div class="header-status">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Connecting...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <main class="main">
+    <!-- Upload Zone -->
+    <section class="upload-section">
+      <div class="section-label">01 — UPLOAD</div>
+      <div class="upload-zone" id="uploadZone">
+        <div class="upload-icon">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <path d="M24 8V32M24 8L16 16M24 8L32 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 36H40" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+          </svg>
+        </div>
+        <div class="upload-text">
+          <span class="upload-title">Drop files here</span>
+          <span class="upload-sub">or <label for="fileInput" class="upload-link">browse files</label></span>
+        </div>
+        <div class="upload-meta">AES-256 encrypted · HDFS distributed · up to 500 MB</div>
+        <input type="file" id="fileInput" class="file-input" />
+      </div>
+
+      <!-- Upload Progress -->
+      <div class="upload-progress" id="uploadProgress" style="display:none">
+        <div class="progress-header">
+          <span class="progress-filename" id="progressFilename"></span>
+          <span class="progress-pct" id="progressPct">0%</span>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="progress-steps" id="progressSteps"></div>
+      </div>
+    </section>
+
+    <!-- Files List -->
+    <section class="files-section">
+      <div class="section-header">
+        <div class="section-label">02 — STORED FILES</div>
+        <button class="refresh-btn" id="refreshBtn" title="Refresh">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M13.65 2.35A8 8 0 1014 8h-2a6 6 0 11-1.06-3.41L8 7h6V1l-2.35 1.35z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="files-list" id="filesList">
+        <div class="files-empty" id="filesEmpty">
+          <div class="empty-icon">◫</div>
+          <div>No files stored yet</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast Notifications -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" id="modalOverlay" style="display:none">
+    <div class="modal">
+      <div class="modal-title">Delete file?</div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="modalCancel">Cancel</button>
+        <button class="btn btn-danger" id="modalConfirm">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

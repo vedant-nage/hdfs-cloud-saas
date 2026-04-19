@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+  <!-- HDFS NameNode URI -->
+  <property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://namenode:9000</value>
+  </property>
+
+  <!-- Enable WebHDFS REST API -->
+  <property>
+    <name>hadoop.http.staticuser.user</name>
+    <value>hadoop</value>
+  </property>
+
+  <!-- Temporary directory -->
+  <property>
+    <name>hadoop.tmp.dir</name>
+    <value>/opt/hadoop/data/tmp</value>
+  </property>
+</configuration>
