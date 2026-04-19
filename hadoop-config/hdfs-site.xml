@@ -34,7 +34,7 @@
   <!-- DataNode Web UI port -->
   <property>
     <n>dfs.datanode.http.address</n>
-    <value>0.0.0.0:9864</value>
+    <value>0.0.0.0:9870</value>
   </property>
 
   <!-- Allow remote hosts to access WebHDFS -->
