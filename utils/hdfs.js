@@ -4,18 +4,41 @@
  */
 
 const axios = require('axios');
-const FormData = require('form-data');
 const config = require('../config/config');
 
-const { baseUrl, user, basePath } = config.hdfs;
+const { baseUrl, user, basePath, host } = config.hdfs;
 
+/**
+ * Build HDFS URL with operation + user
+ */
 function hdfsUrl(path, op, extra = {}) {
-  const params = new URLSearchParams({ 'op': op, 'user.name': user, ...extra });
+  const params = new URLSearchParams({
+    op: op,
+    'user.name': user,
+    ...extra,
+  });
   return `${baseUrl}${path}?${params}`;
 }
 
 /**
- * Create a directory in HDFS (mkdir -p equivalent)
+ * Fix redirect URL (IMPORTANT for EC2)
+ * Replaces private IP with public EC2 IP
+ */
+function fixRedirectUrl(url) {
+  if (!url) return url;
+
+  try {
+    const publicHost = host;
+
+    // Replace any host with public EC2 IP
+    return url.replace(/\/\/.*?:/, `//${publicHost}:`);
+  } catch (err) {
+    return url;
+  }
+}
+
+/**
+ * Create directory (mkdir -p)
  */
 async function mkdirs(path) {
   const url = hdfsUrl(path, 'MKDIRS');
@@ -24,54 +47,66 @@ async function mkdirs(path) {
 }
 
 /**
- * Write a Buffer to an HDFS path
- * WebHDFS requires a two-step redirect for write operations
+ * Write file (handles redirect properly)
  */
 async function writeFile(hdfsPath, buffer) {
-  // Step 1: Get redirect URL from NameNode
+  // Step 1: Request to NameNode
   const initUrl = hdfsUrl(hdfsPath, 'CREATE', { overwrite: 'true' });
+
   const initRes = await axios.put(initUrl, null, {
     maxRedirects: 0,
     validateStatus: (s) => s === 307 || s === 201,
   });
 
   let writeUrl;
+
   if (initRes.status === 307) {
-    // Step 2: Follow redirect to DataNode
+    // Step 2: Redirect to DataNode
     writeUrl = initRes.headers['location'];
+
+    // 🔥 FIX: Replace private IP with public EC2 IP
+    writeUrl = fixRedirectUrl(writeUrl);
   } else {
     writeUrl = initUrl;
   }
 
+  // Step 3: Upload file
   await axios.put(writeUrl, buffer, {
-    headers: { 'Content-Type': 'application/octet-stream' },
+    headers: {
+      'Content-Type': 'application/octet-stream',
+    },
     maxRedirects: 5,
   });
 }
 
 /**
- * Read a file from HDFS into a Buffer
+ * Read file
  */
 async function readFile(hdfsPath) {
   const url = hdfsUrl(hdfsPath, 'OPEN');
+
   const res = await axios.get(url, {
     responseType: 'arraybuffer',
     maxRedirects: 5,
   });
+
   return Buffer.from(res.data);
 }
 
 /**
- * Delete a file or directory from HDFS
+ * Delete file
  */
 async function deleteFile(hdfsPath, recursive = false) {
-  const url = hdfsUrl(hdfsPath, 'DELETE', { recursive: String(recursive) });
+  const url = hdfsUrl(hdfsPath, 'DELETE', {
+    recursive: String(recursive),
+  });
+
   const res = await axios.delete(url);
   return res.data;
 }
 
 /**
- * Check if a path exists in HDFS
+ * Check existence
  */
 async function exists(hdfsPath) {
   try {
@@ -85,7 +120,7 @@ async function exists(hdfsPath) {
 }
 
 /**
- * List files in a directory
+ * List directory
  */
 async function listDir(hdfsPath) {
   const url = hdfsUrl(hdfsPath, 'LISTSTATUS');
@@ -94,7 +129,7 @@ async function listDir(hdfsPath) {
 }
 
 /**
- * Get file status / metadata
+ * File metadata
  */
 async function fileStatus(hdfsPath) {
   const url = hdfsUrl(hdfsPath, 'GETFILESTATUS');
@@ -103,21 +138,21 @@ async function fileStatus(hdfsPath) {
 }
 
 /**
- * Ensure the base storage directory exists
+ * Ensure base directory exists
  */
 async function ensureBaseDir() {
   await mkdirs(basePath);
 }
 
 /**
- * Build the HDFS path for a specific file's chunk
+ * Chunk path
  */
 function chunkPath(fileId, chunkIndex) {
   return `${basePath}/files/${fileId}/chunk_${String(chunkIndex).padStart(6, '0')}`;
 }
 
 /**
- * Build the HDFS directory for a file's chunks
+ * File directory path
  */
 function fileDirPath(fileId) {
   return `${basePath}/files/${fileId}`;
