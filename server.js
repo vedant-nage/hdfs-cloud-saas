@@ -18,7 +18,11 @@ const healthRouter = require('./routes/health');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
+const hdfs = require('./utils/hdfs');
 
+hdfs.ensureBaseDir()
+  .then(() => console.log("HDFS base directory ready"))
+  .catch(console.error);
 // ── Security Middleware ─────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: false, // Relaxed for SaaS UI
