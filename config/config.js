@@ -8,7 +8,7 @@ module.exports = {
   hdfs: {
     host: process.env.HDFS_HOST || 'localhost',
     port: parseInt(process.env.HDFS_PORT) || 9870,
-    user: process.env.HDFS_USER || 'hadoop',
+    user: process.env.HDFS_USER || 'ubuntu',
     basePath: process.env.HDFS_BASE_PATH || '/cloud-storage',
     get baseUrl() {
       return `http://${this.host}:${this.port}/webhdfs/v1`;
@@ -31,4 +31,5 @@ module.exports = {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000,
     max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
   },
+  
 };
